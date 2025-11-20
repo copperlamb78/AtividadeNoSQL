@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { createInsumoController, deleteInsumoByNameController, getAllInsumosController, updateInsumoByNameController } from "../controller/insumosController.ts";
+import { createInsumoController, deleteInsumoByNameController, getAllInsumosOrByNameController, updateInsumoByNameController } from "../controller/insumosController.ts";
 
 export const insumosRoute = Router();
 
-insumosRoute.get("/", getAllInsumosController);
+insumosRoute.get("/", getAllInsumosOrByNameController);
 
 insumosRoute.put('/:nome', updateInsumoByNameController);
 

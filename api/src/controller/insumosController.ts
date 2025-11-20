@@ -26,7 +26,7 @@ export async function createInsumoController(req: Request, res: Response) {
     }
 }
 
-export async function getAllInsumosController(req: Request, res: Response) {
+export async function getAllInsumosOrByNameController(req: Request, res: Response) {
     try {
         if (req.body) {
             const parse = await nomeInsumo.safeParseAsync(req.body);
@@ -52,14 +52,14 @@ export async function getAllInsumosController(req: Request, res: Response) {
 
 export async function updateInsumoByNameController(req: Request, res: Response) {
     try {
-        const { nome } = req.params
+        const nomeInsumo = req.query.nome as string
         const parse = await insumoSchemaOptional.safeParseAsync(req.body)
             if (!parse.success) {
                 return res.status(400).json({
                 error: "Dados inválidos",
                 detalhes: parse.error.format()
             })}
-        const insumo = await updateInsumoByNameModel(nome, parse.data)
+        const insumo = await updateInsumoByNameModel(nomeInsumo, parse.data)
         return res.status(200).json(insumo)
     } catch (error) {
         console.error("Error ao atualizar insumo: ", error)
