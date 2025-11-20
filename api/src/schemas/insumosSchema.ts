@@ -12,9 +12,7 @@ export const insumoSchema = z.object({
     .positive({ message: "Quantidade deve ser um número positivo"}),
 
     unidade: z
-    .string({ message: "unidade deve ser uma string"})
-    .min(1, { message: "Unidade é obrigatória"})
-    .max(30, { message: "Unidade deve ter no máximo 30 caracteres"})
+    .enum(["Kg", "L", "Un", "g", "ml"], { message: "Unidade deve ser obrigatoriamente: Kg, L, Un, g ou ml"})
     .transform((v) => v.trim()),
 
     custo: z
@@ -36,9 +34,7 @@ export const insumoSchemaOptional = z.object({
     .optional(),
 
     unidade: z
-    .string({ message: "unidade deve ser uma string"})
-    .min(1, { message: "Unidade é obrigatória"})
-    .max(30, { message: "Unidade deve ter no máximo 30 caracteres"})
+    .enum(["Kg", "L", "Un", "g", "ml"], { message: "Unidade deve ser obrigatoriamente: Kg, L, Un, g ou ml"})
     .transform((v) => v.trim())
     .optional(),
 
@@ -58,5 +54,3 @@ export const nomeInsumo = z.object({
     .max(100, { message: "Nome deve ter no máximo 100 caracteres"})
     .transform((v) => v.trim())
 })
-
-export type InsumoData = z.infer<typeof insumoSchema>;
