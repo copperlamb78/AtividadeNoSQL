@@ -1,5 +1,5 @@
 import type{ Request, Response } from "express";
-import { createInsumoModel, getAllInsumosModel, getInsumoByNameModel, updateInsumoByNameModel } from "../model/insumosModel.ts";
+import { createInsumoModel, deleteInsumoByNameModel, getAllInsumosModel, getInsumoByNameModel, updateInsumoByNameModel } from "../model/insumosModel.ts";
 import { insumoSchema, insumoSchemaOptional, nomeInsumo } from "../schemas/insumosSchema.ts";
 
 export async function createInsumoController(req: Request, res: Response) {
@@ -64,5 +64,21 @@ export async function updateInsumoByNameController(req: Request, res: Response) 
     } catch (error) {
         console.error("Error ao atualizar insumo: ", error)
         return res.status(500).json({ message: "Error ao atualizar insumo", error})
+    }
+}
+
+export async function deleteInsumoByNameController(req: Request, res: Response) {
+    try {
+        const parse = await nomeInsumo.safeParseAsync(req.body);
+            if (!parse.success) {
+                return res.status(400).json({
+                error: "Dados inválidos",
+                detalhes: parse.error.format()
+            })}
+        const insumoDeletado = await deleteInsumoByNameModel(parse.data.nome)
+        return res.status(200).json(insumoDeletado)
+    } catch (error) {
+        console.error("Error ao deletar insumo: ", error)
+        return res.status(500).json({ message: "Error ao deletar insumo", error})
     }
 }

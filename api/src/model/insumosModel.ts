@@ -45,3 +45,13 @@ export async function updateInsumoByNameModel(nome: string, updates: Partial<{
     }
     return insumo
 }
+
+export async function deleteInsumoByNameModel(nome: string) {
+    const db = await connectDB()
+    const insumosCollection = db.collection("insumos")
+    const insumoDeletado = await insumosCollection.deleteOne({ nome: nome})
+    if (insumoDeletado.deletedCount === 0) {
+        throw new Error("Insumo não encontrado")
+    }
+    return insumoDeletado
+}
