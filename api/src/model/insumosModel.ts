@@ -18,3 +18,30 @@ export async function getAllInsumosModel() {
     const insumos = await insumosCollection.find().toArray();
     return insumos;
 }
+
+export async function getInsumoByNameModel(data: {
+    nome: string
+}) {
+    const db = await connectDB()
+    const insumosCollection = db.collection("insumos")
+    const insumo = await insumosCollection.find({ nome: data.nome}).toArray()
+    return insumo
+}
+
+export async function updateInsumoByNameModel(nome: string, updates: Partial<{
+    nome: string,
+    quantidade: number,
+    unidade: string,
+    custo: number
+}>) {
+    const db = await connectDB()
+    const insumosCollection = db.collection("insumos")
+    const insumo = await insumosCollection.updateOne(
+        { nome: nome },
+        { $set: updates }
+    )
+    if (insumo.matchedCount === 0) {
+        throw new Error("Insumo não encontrado")
+    }
+    return insumo
+}

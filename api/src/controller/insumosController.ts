@@ -1,6 +1,6 @@
 import type{ Request, Response } from "express";
-import { createInsumoModel, getAllInsumosModel } from "../model/insumosModel.ts";
-import { insumoSchema } from "../schemas/insumosSchema.ts";
+import { createInsumoModel, getAllInsumosModel, getInsumoByNameModel, updateInsumoByNameModel } from "../model/insumosModel.ts";
+import { insumoSchema, insumoSchemaOptional, nomeInsumo } from "../schemas/insumosSchema.ts";
 
 export async function createInsumoController(req: Request, res: Response) {
     try {
@@ -19,19 +19,50 @@ export async function createInsumoController(req: Request, res: Response) {
             custo
         }
         const insumo = await createInsumoModel(novoInsumo);
-        res.status(201).json(insumo);
+        return res.status(201).json(insumo);
     } catch (error) {
         console.error("Error ao criar insumo: ", error)        
-        res.status(500).json({ message: "Error ao criar insumo", error})
+        return res.status(500).json({ message: "Error ao criar insumo", error})
     }
 }
 
 export async function getAllInsumosController(req: Request, res: Response) {
     try {
+        if (req.body) {
+            const parse = await nomeInsumo.safeParseAsync(req.body);
+            if (!parse.success) {
+                return res.status(400).json({
+                error: "Dados inválidos",
+                detalhes: parse.error.format()
+            })}
+            const { nome } = parse.data
+            const insumo = await getInsumoByNameModel({ nome })
+            if (insumo.length === 0) {
+                return res.status(404).json({ message: "Não foi possível encontrar o insumo" })
+            }
+            return res.status(200).json(insumo)
+        }
         const insumos = await getAllInsumosModel();
-        res.status(200).json(insumos)
+        return res.status(200).json(insumos)
     } catch (error) {
         console.error("Error ao buscar insumos: ", error)
-        res.status(500).json({ message: "Error ao buscar insumos", error})
+        return res.status(500).json({ message: "Error ao buscar insumos", error})
+    }
+}
+
+export async function updateInsumoByNameController(req: Request, res: Response) {
+    try {
+        const { nome } = req.params
+        const parse = await insumoSchemaOptional.safeParseAsync(req.body)
+            if (!parse.success) {
+                return res.status(400).json({
+                error: "Dados inválidos",
+                detalhes: parse.error.format()
+            })}
+        const insumo = await updateInsumoByNameModel(nome, parse.data)
+        return res.status(200).json(insumo)
+    } catch (error) {
+        console.error("Error ao atualizar insumo: ", error)
+        return res.status(500).json({ message: "Error ao atualizar insumo", error})
     }
 }
