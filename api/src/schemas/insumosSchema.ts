@@ -1,56 +1,43 @@
 import { z } from "zod";
 
 export const insumoSchema = z.object({
-    nome: z
-    .string({ message: "Nome deve ser uma string"})
+  nome: z
+    .string({ message: "Nome deve ser uma string" })
     .min(1, { message: "Nome é obrigatório" })
-    .max(100, { message: "Nome deve ter no máximo 100 caracteres"})
+    .max(100, { message: "Nome deve ter no máximo 100 caracteres" })
     .transform((v) => v.trim()),
 
-    quantidade: z
-    .number({ message: "Quantidade deve ser um número" })
-    .positive({ message: "Quantidade deve ser um número positivo"}),
+  quantidade: z.number({ message: "Quantidade deve ser um número" }).positive({ message: "Quantidade deve ser um número positivo" }),
 
-    unidade: z
-    .enum(["Kg", "L", "Un", "g", "ml"], { message: "Unidade deve ser obrigatoriamente: Kg, L, Un, g ou ml"})
-    .transform((v) => v.trim()),
+  unidade: z.enum(["Kg", "L", "Un", "g", "ml"], { message: "Unidade deve ser obrigatoriamente: Kg, L, Un, g ou ml" }).transform((v) => v.trim()),
 
-    custo: z
-    .number({ message: "Custo deve ser um número" })
-    .nonnegative({ message: "Custo deve ser um número não negativo"}),
-})
+  custo: z.number({ message: "Custo deve ser um número" }).nonnegative({ message: "Custo deve ser um número não negativo" }),
+});
 
-export const insumoSchemaOptional = z.object({
+export const insumoSchemaOptional = z
+  .object({
     nome: z
-    .string({ message: "Nome deve ser uma string"})
-    .min(1, { message: "Nome é obrigatório" })
-    .max(100, { message: "Nome deve ter no máximo 100 caracteres"})
-    .transform((v) => v.trim())
-    .optional(),
+      .string({ message: "Nome deve ser uma string" })
+      .min(1, { message: "Nome é obrigatório" })
+      .max(100, { message: "Nome deve ter no máximo 100 caracteres" })
+      .transform((v) => v.trim())
+      .optional(),
 
-    quantidade: z
-    .number({ message: "Quantidade deve ser um número" })
-    .positive({ message: "Quantidade deve ser um número positivo"})
-    .optional(),
+    quantidade: z.number({ message: "Quantidade deve ser um número" }).positive({ message: "Quantidade deve ser um número positivo" }).optional(),
 
     unidade: z
-    .enum(["Kg", "L", "Un", "g", "ml"], { message: "Unidade deve ser obrigatoriamente: Kg, L, Un, g ou ml"})
-    .transform((v) => v.trim())
-    .optional(),
+      .enum(["Kg", "L", "Un", "g", "ml"], { message: "Unidade deve ser obrigatoriamente: Kg, L, Un, g ou ml" })
+      .transform((v) => v.trim())
+      .optional(),
 
-    custo: z
-    .number({ message: "Custo deve ser um número" })
-    .nonnegative({ message: "Custo deve ser um número não negativo"})
-    .optional(),
-}).refine(
-   (data) => Object.keys(data).length > 0,
-   "Você deve enviar pelo menos um campo para atualizar."
-)
+    custo: z.number({ message: "Custo deve ser um número" }).nonnegative({ message: "Custo deve ser um número não negativo" }).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, "Você deve enviar pelo menos um campo para atualizar.");
 
 export const nomeInsumo = z.object({
-    nome: z
-    .string({ message: "Nome deve ser uma string"})
+  nome: z
+    .string({ message: "Nome deve ser uma string" })
     .min(1, { message: "Nome é obrigatório" })
-    .max(100, { message: "Nome deve ter no máximo 100 caracteres"})
-    .transform((v) => v.trim())
-})
+    .max(100, { message: "Nome deve ter no máximo 100 caracteres" })
+    .transform((v) => v.trim()),
+});

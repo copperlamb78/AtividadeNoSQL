@@ -5,7 +5,7 @@ export const insumosRoute = Router();
 
 insumosRoute.get("/", getAllInsumosOrByNameController);
 
-insumosRoute.put('/:nome', updateInsumoByNameController);
+insumosRoute.put("/:nome", updateInsumoByNameController);
 
 insumosRoute.delete("/", deleteInsumoByNameController);
 
