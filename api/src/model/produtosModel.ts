@@ -24,7 +24,7 @@ export async function getAllProdutosModel() {
 export async function getProdutoByNameModel(data: { nome: string }) {
   const db = await connectDB();
   const produtosCollection = db.collection("produtos");
-  const produto = await produtosCollection.find({ nome: data.nome }).toArray();
+  const produto = await produtosCollection.findOne({ nome: data.nome });
   return produto;
 }
 

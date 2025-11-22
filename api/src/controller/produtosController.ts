@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
-import { produtoSchema } from "../schemas/produtosSchemas.ts";
-import { createProdutosModel, deleteProdutoByNameModel, getAllProdutosModel, updateProdutoByNameModel } from "../model/produtosModel.ts";
+import { produtoSchema } from "../schemas/produtosSchema.ts";
+import {
+  createProdutosModel,
+  deleteProdutoByNameModel,
+  getAllProdutosModel,
+  updateProdutoByNameModel,
+} from "../model/produtosModel.ts";
 import { getProdutoByNameModel } from "../model/produtosModel.ts";
 import { getInsumoByNameModel } from "../model/insumosModel.ts";
 
@@ -76,12 +81,15 @@ export async function updateProdutoByNameController(req: Request, res: Response)
     if (parse.data.insumos) {
       const insumosDoUsuario = parse.data.insumos;
       const produto = await getProdutoByNameModel({ nome: nomeProduto });
-      const insumosProduto = produto[0].insumos;
+      if (!produto || produto.length === 0) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+      const insumosProduto = produto.insumos;
 
       const insumosAtualizados: { nome: string; quantidade: number }[] = [];
 
       for (const insumoAntigo of insumosProduto) {
-        const insumoNovo = insumosDoUsuario.find((i) => i.nome === insumoAntigo.nome);
+        const insumoNovo = insumosDoUsuario.find((i: { nome: string }) => i.nome === insumoAntigo.nome);
         if (insumoNovo) {
           insumosAtualizados.push({
             nome: insumoNovo.nome,
