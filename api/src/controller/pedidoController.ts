@@ -92,6 +92,9 @@ export async function deletePedidoByIdController(req: Request, res: Response) {
     const pedidoToDelete = await getPedidoByIdModel(id);
     if (!pedidoToDelete) {
       return res.status(404).json({ message: "Pedido não encontrado" });
+    } else if (pedidoToDelete.status === "Cancelado") {
+      const pedidoDeletado = await deletePedidoByIdModel(id);
+      return res.status(200).json(pedidoDeletado);
     }
     for (const insumo of pedidoToDelete.insumosUsados) {
       const insumoNoEstoque = await getInsumoByNameModel({ nome: insumo.nome });
