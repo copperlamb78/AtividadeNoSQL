@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { pedidoSchema } from "../schemas/pedidoSchema.ts";
 import { createPedidoModel } from "../model/pedidoModel.ts";
 import { getProdutoByNameModel } from "../model/produtosModel.ts";
+import { getInsumoByNameModel, updateInsumoByNameModel } from "../model/insumosModel.ts";
 // Fazer com que o pedido desconte insumos a cada
 // produto vendido
 export async function createPedidoController(req: Request, res: Response) {
@@ -22,7 +23,16 @@ export async function createPedidoController(req: Request, res: Response) {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
       for (const insumo of produtoToCount.insumos) {
-        insumosUsados.push({ nome: insumo.nome, quantidade: insumo.quantidade * produto.quantidade });
+        const insumoUsadoParaLista = { nome: insumo.nome, quantidade: insumo.quantidade * produto.quantidade };
+        const insumoNoEstoque = await getInsumoByNameModel({ nome: insumoUsadoParaLista.nome });
+        if (insumoNoEstoque[0].quantidade < insumoUsadoParaLista.quantidade) {
+          return res.status(400).json({ message: `Insumo ${insumoUsadoParaLista.nome} insuficiente no estoque` });
+        }
+        const insumoUpdated = updateInsumoByNameModel(insumoUsadoParaLista.nome, {
+          quantidade: insumoNoEstoque[0]?.quantidade - insumoUsadoParaLista.quantidade,
+        });
+        console.log("Insumo atualizado: ", insumoUpdated);
+        insumosUsados.push(insumoUsadoParaLista);
       }
       const produtoPreco = produtoToCount.preco * produto.quantidade;
       ReceitaTotal += produtoPreco;
