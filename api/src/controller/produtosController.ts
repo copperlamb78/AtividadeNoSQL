@@ -46,6 +46,7 @@ export async function createProdutoController(req: Request, res: Response) {
 export async function getAllProdutosOrByNameController(req: Request, res: Response) {
   try {
     if (req.body) {
+      console.log("cheguei no if?");
       const parse = await produtoSchema.pick({ nome: true }).safeParseAsync(req.body);
       if (!parse.success) {
         return res.status(400).json({
@@ -59,6 +60,7 @@ export async function getAllProdutosOrByNameController(req: Request, res: Respon
       }
       return res.status(200).json({ produtos });
     }
+    console.log("passei do if?");
     const produtos = await getAllProdutosModel();
     return res.status(200).json({ produtos });
   } catch (error) {
@@ -68,7 +70,6 @@ export async function getAllProdutosOrByNameController(req: Request, res: Respon
 }
 
 export async function updateProdutoByNameController(req: Request, res: Response) {
-  // verificar pq apaga todos os insumos quando atualiza apenas 1
   try {
     const nomeProduto = req.params.nome;
     const parse = await produtoSchema.partial().safeParseAsync(req.body);
