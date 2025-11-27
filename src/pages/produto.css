@@ -1,0 +1,240 @@
+.produto-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0px 20px 0px;
+  min-height: calc(100vh - 180px);
+  background-color: #f4f4f4;
+}
+
+.produto-container h2 {
+  color: #333;
+  font-family: "Pacifico", cursive;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-top: 60px;
+}
+
+.produto-form {
+  max-width: 600px; /* Um pouco maior para acomodar os ingredientes */
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #9f164c;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #444;
+  font-size: 1.1rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  font-size: 1rem;
+  background-color: #f9f9f9;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #9f164c;
+  box-shadow: 0 0 0 3px rgba(159, 22, 76, 0.2);
+}
+
+.ingredientes-title {
+  text-align: center;
+  font-family: "Pacifico", cursive;
+  color: #555;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.ingrediente-item-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.ingrediente-group {
+  flex: 1;
+}
+
+.quantidade-group {
+  flex-basis: 120px;
+}
+
+.remove-item-button {
+  height: 48px;
+  width: 48px;
+  border: none;
+  background-color: #fbebee;
+  color: #dc3545;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 4px;
+  margin-top: 11px;
+}
+
+.remove-item-button:hover {
+  background-color: #f8d7da;
+}
+
+.add-item-button,
+.submit-button {
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.add-item-button {
+  margin-bottom: 25px;
+  border: 2px dashed #9f164c;
+  background-color: #fff;
+  color: #9f164c;
+}
+
+.add-item-button:hover {
+  background-color: rgba(159, 22, 76, 0.05);
+}
+
+.submit-button {
+  border: none;
+  background-color: #9f164c;
+  color: white;
+}
+
+.submit-button:hover {
+  background-color: #7d113c;
+}
+
+/* --- Catálogo de Receitas --- */
+.catalogo-container {
+  max-width: 900px;
+  margin: 50px auto 0;
+  padding: 0 20px 120px;
+}
+
+.catalogo-container h2 {
+  color: #333;
+  font-family: "Pacifico", cursive;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  padding: 0 30px 0 30px;
+}
+
+.receitas-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 20px;
+}
+
+.receita-card {
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 5px solid #9f164c;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.receita-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.receita-nome {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.receita-preco {
+  font-size: 1.1rem;
+  color: #555;
+  margin: 0;
+}
+
+.receita-card-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.receita-card-actions button {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-button {
+  background-color: #e9ecef;
+  color: #495057;
+  width: 100px;
+}
+
+.edit-button:hover {
+  background-color: #ced4da;
+  border-color: #adb5bd;
+}
+
+.delete-button {
+  background-color: #fbebee;
+  color: #c92a2a;
+}
+
+.delete-button:hover {
+  background-color: #ffc9c9;
+  border-color: #ffa8a8;
+}
+
+/* Responsividade para telas maiores */
+@media (min-width: 768px) {
+  .receitas-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .receitas-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

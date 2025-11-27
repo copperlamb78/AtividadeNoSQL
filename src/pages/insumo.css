@@ -1,0 +1,131 @@
+.insumo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 120px;
+  min-height: calc(100vh - 180px);
+  background-color: #f4f4f4;
+}
+
+.insumo-container h2 {
+  color: #333;
+  font-family: "Pacifico", cursive;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  padding: 0 25px;
+}
+
+.insumo-form {
+  max-width: 500px;
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #9f164c;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #444;
+  font-size: 1.1rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  font-size: 1rem;
+  background-color: #f9f9f9;
+  transition: border-color 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #9f164c;
+  box-shadow: 0 0 0 3px rgba(159, 22, 76, 0.2);
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #9f164c;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 10px;
+}
+
+.submit-button:hover {
+  background-color: #7d113c;
+}
+
+/* --- Lista de Estoque --- */
+.estoque-list-container {
+  width: 85vw;
+  max-width: 500px;
+  margin-top: 20px;
+}
+
+.estoque-list-container h3 {
+  font-family: "Pacifico", cursive;
+  color: #333;
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+.insumo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insumo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  border-left: 5px solid #9f164c;
+}
+
+.insumo-nome {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.insumo-quantidade {
+  font-size: 1rem;
+  color: #fff;
+  background-color: #6c757d;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-weight: 500;
+}

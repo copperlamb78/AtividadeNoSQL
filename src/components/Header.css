@@ -1,0 +1,74 @@
+@import url("https://fonts.googleapis.com/css2?family=Pacifico&display=swap");
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f8f8; /* Cor de fundo do cabeçalho */
+  padding: 20px; /* Espaçamento interno */
+  position: fixed; /* Fixa o cabeçalho na tela */
+  top: 0; /* Alinha o cabeçalho ao topo da tela */
+  left: 0; /* Alinha o cabeçalho à esquerda da tela */
+  width: 100%; /* Faz com que o cabeçalho ocupe toda a largura */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.338); /* Adiciona uma sombra sutil para destacá-lo */
+  box-sizing: border-box; /* Garante que padding não aumente a largura total */
+  z-index: 1000; /* Garante que o cabeçalho fique acima de outros conteúdos */
+  border-bottom: 3px solid #9f164c;
+  border-radius: 0 0 20px 20px;
+}
+
+.header-title {
+  font-family: "Pacifico", cursive;
+  font-size: 2.5rem; /* Tamanho de fonte menor para mobile */
+  color: #333;
+  margin: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.header-emoji {
+  font-size: 1.5em; /* Tamanho da fonte do emoji */
+  margin-left: 10px; /* Espaçamento à esquerda do emoji */
+  display: flex; /* Alinha o emoji verticalmente com o texto */
+  align-items: center;
+}
+
+body {
+  /* Ajuste o valor para corresponder à altura do seu cabeçalho */
+  padding-top: 80px;
+}
+
+/* --- Media Queries para Responsividade (Mobile First) --- */
+
+/* Para tablets (a partir de 481px de largura) */
+@media (min-width: 481px) {
+  .header-container {
+    height: 70px;
+    padding: 0 15px;
+  }
+
+  .header-title {
+    font-size: 1.5rem;
+  }
+
+  .header-emoji {
+    font-size: calc(70px * 0.7);
+    margin-left: 15px;
+  }
+}
+
+/* Para celulares */
+@media (min-width: 769px) {
+  .header-container {
+    height: 80px;
+    padding: 0 20px;
+  }
+
+  .header-title {
+    font-size: 1.8rem;
+  }
+
+  .header-emoji {
+    font-size: calc(80px * 0.7);
+  }
+}

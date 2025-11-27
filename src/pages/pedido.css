@@ -1,0 +1,211 @@
+body {
+  padding-top: 40px;
+}
+
+.pedido-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 120px; /* Aumenta o padding e o espaço para a navbar */
+  min-height: calc(100vh - 180px); /* Ajusta a altura mínima */
+  background-color: #f4f4f4; /* Cor de fundo do App.css */
+}
+
+.pedido-container h2 {
+  color: #333;
+  font-family: "Pacifico", cursive;
+  font-size: 2.5rem; /* Aumenta o tamanho da fonte */
+  margin-bottom: 30px; /* Aumenta a margem */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Adiciona uma sombra sutil */
+}
+
+.pedido-form {
+  max-width: 500px;
+  background-color: #ffffff;
+  padding: 30px; /* Aumenta o padding interno */
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #9f164c; /* Adiciona uma borda no topo com a cor principal */
+}
+
+.form-group {
+  margin-bottom: 15px; /* Aumenta a margem */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #444; /* Escurece um pouco a cor */
+  font-size: 1.1rem;
+}
+
+.form-group select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #ddd; /* Borda um pouco mais espessa */
+  font-size: 1rem;
+  background-color: #f9f9f9;
+  appearance: none; /* Remove a seta padrão */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #9f164c;
+  box-shadow: 0 0 0 3px rgba(159, 22, 76, 0.2);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #9f164c;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-transform: uppercase; /* Deixa o texto em maiúsculo */
+  letter-spacing: 1px; /* Adiciona espaçamento entre as letras */
+}
+
+.submit-button:hover {
+  background-color: #7d113c;
+}
+
+/* --- Estilos para múltiplos itens --- */
+.pedido-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.product-group {
+  flex: 1; /* Ocupa o espaço restante */
+}
+
+.quantity-group {
+  flex-basis: 90px; /* Largura fixa para quantidade */
+}
+
+.quantity-group label {
+  font-size: 1rem; /* Fonte menor para "Qtd" */
+}
+
+.remove-item-button {
+  height: 48px; /* Alinha com a altura do select */
+  width: 48px;
+  border: none;
+  background-color: #fbebee;
+  color: #dc3545;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0; /* Ajuste visual do 'x' */
+  margin-top: 20px;
+}
+
+.remove-item-button:hover {
+  background-color: #f8d7da;
+}
+
+.add-item-button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 25px;
+  border: 2px dashed #9f164c;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #9f164c;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.add-item-button:hover {
+  background-color: rgba(159, 22, 76, 0.05);
+}
+
+/* --- Histórico de Pedidos --- */
+.historico-pedidos-container {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 40px;
+}
+
+.historico-pedidos-container h3 {
+  font-family: "Pacifico", cursive;
+  color: #333;
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+.pedidos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.pedido-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid #9f164c;
+}
+
+.pedido-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pedido-id {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.pedido-receita {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.pedido-status {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.status-entregue {
+  background-color: #28a745; /* Verde */
+}
+
+.status-em-preparo {
+  background-color: #ffc107; /* Amarelo */
+  color: #333;
+}
+
+.status-cancelado {
+  background-color: #dc3545; /* Vermelho */
+}
