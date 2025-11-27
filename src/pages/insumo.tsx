@@ -1,23 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Navbar from "../components/Navbar";
+import axios from "axios";
 import "./insumo.css";
 
 const unitOptions = ["Kg", "L", "Un", "g", "ml"];
 
 // Exemplo de dados de insumos em estoque que virão do seu backend
-const insumosEmEstoque = [
-  { id: 1, nome: "Farinha de Trigo", quantidade: 5, unidade: "Kg" },
-  { id: 2, nome: "Ovos", quantidade: 24, unidade: "Un" },
-  { id: 3, nome: "Leite Condensado", quantidade: 12, unidade: "Un" },
-  { id: 4, nome: "Chocolate em Pó", quantidade: 1.5, unidade: "Kg" },
-];
+
+
+async function fetchInsumos() {
+  try {
+    const res: { data: [{ id: number; nome: string; quantidade: number; unidade: string; custo: number }]} = await axios.get("http://localhost:3000/api/insumos");
+    return res.data;
+  } catch (error) {
+    console.error("Erro ao buscar insumos:", error);
+    return [];
+  }
+}
 
 const InsumoPage: React.FC = () => {
   const [nome, setNome] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [unidade, setUnidade] = useState("Un");
   const [custo, setCusto] = useState("");
+  const [insumosEmEstoque, setInsumosEmEstoque] = useState<{ id: number; nome: string; quantidade: number; unidade: string; custo: number }[]>([]);
+
+  useEffect(() => {
+    fetchInsumos().then(setInsumosEmEstoque);
+  }, []);
+  
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -88,7 +100,7 @@ const InsumoPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="insumo-cost">Custo Total (R$):</label>
+            <label htmlFor="insumo-cost">Custo por unidade (R$):</label>
             <input
               type="number"
               id="insumo-cost"
