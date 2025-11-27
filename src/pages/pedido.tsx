@@ -1,42 +1,73 @@
-import React, { useState } from "react";
-import "./pedido.css"; // Certifique-se de que o caminho está correto
+import React, { useState, useEffect } from "react";
+import "./pedido.css";
 import Header from "../components/Header";
 import Navbar from "../components/Navbar";
+import axios from "axios";
 
-// Exemplo de dados de produtos (receitas) que virão do seu backend
-const availableProducts = [
-  { id: 1, name: "Bolo de Chocolate" },
-  { id: 2, name: "Torta de Morango" },
-  { id: 3, name: "Cupcake de Baunilha" },
-  { id: 4, name: "Cheesecake de Frutas Vermelhas" },
-];
+// Interfaces
+interface Product {
+  id: string;
+  name: string;
+}
 
-// Exemplo de dados do histórico de pedidos que virão do seu backend
-const initialOrderHistory = [
-  { id: "A1B2-C3D4", recipe: "1x Bolo de Chocolate", status: "Entregue" },
-  { id: "E5F6-G7H8", recipe: "2x Torta de Morango", status: "Em preparo" },
-  { id: "I9J0-K1L2", recipe: "1x Cheesecake de Frutas Vermelhas", status: "Cancelado" },
-  { id: "M3N4-O5P6", recipe: "5x Cupcake de Baunilha", status: "Entregue" },
-];
-
-// Interface para um item do pedido
 interface OrderItem {
   id: number;
   productName: string;
   quantity: number;
 }
 
+interface Order {
+  _id: string;
+  produtos: { nome: string; quantidade: number }[];
+  status: "Pendente" | "Entregue" | "Cancelado";
+  data: string;
+  ReceitaTotal: number;
+}
+
+const statusMap = {
+  Pendente: { text: "Em preparo", className: "status-em-preparo" },
+  Entregue: { text: "Entregue", className: "status-entregue" },
+  Cancelado: { text: "Cancelado", className: "status-cancelado" },
+};
+
 const PedidoPage: React.FC = () => {
   const [items, setItems] = useState<OrderItem[]>([{ id: Date.now(), productName: "", quantity: 1 }]);
-  const [orders, setOrders] = useState(initialOrderHistory);
-
-  // Estado para o modal de validação/confirmação genérico
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [validationModal, setValidationModal] = useState({
     isOpen: false,
     title: "",
     message: "",
     onConfirm: () => {},
   });
+
+  // Fetch initial data
+  useEffect(() => {
+    fetchProducts();
+    fetchOrders();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/api/produtos");
+      if (res.data && Array.isArray(res.data.produtos)) {
+        setAvailableProducts(res.data.produtos.map((p: any) => ({ id: p._id, name: p.nome })));
+      }
+    } catch (error) {
+      console.error("Erro ao buscar produtos:", error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/api/pedidos");
+      if (Array.isArray(res.data)) {
+        setOrders(res.data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar pedidos:", error);
+    }
+  };
 
   const handleAddItem = () => {
     setItems([...items, { id: Date.now(), productName: "", quantity: 1 }]);
@@ -50,28 +81,56 @@ const PedidoPage: React.FC = () => {
     setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const validItems = items.filter((item) => item.productName);
     if (validItems.length === 0) {
-      alert("Por favor, adicione pelo menos um produto ao pedido.");
+      setValidationModal({
+        isOpen: true,
+        title: "Nenhum produto",
+        message: "Por favor, adicione pelo menos um produto ao pedido.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
       return;
     }
-    // Aqui você adicionaria a lógica para enviar o pedido para a sua API
-    console.log("Pedido realizado com os seguintes itens:", validItems);
-    setValidationModal({
-      isOpen: true,
-      title: "Pedido Realizado!",
-      message: `Pedido realizado com ${validItems.length} tipo(s) de produto(s)!`,
-      onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
-    });
+
+    const newOrderPayload = {
+      produtos: validItems.map((item) => ({
+        nome: item.productName,
+        quantidade: item.quantity,
+      })),
+    };
+
+    try {
+      await axios.post("http://localhost:3000/api/pedidos", newOrderPayload);
+      setValidationModal({
+        isOpen: true,
+        title: "Pedido Realizado!",
+        message: "Seu pedido foi criado com sucesso.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      fetchOrders(); // Refresh orders list
+      setItems([{ id: Date.now(), productName: "", quantity: 1 }]); // Reset form
+    } catch (error) {
+      console.error("Erro ao criar pedido:", error);
+      let errorMessage = "Não foi possível realizar o pedido.";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      setValidationModal({
+        isOpen: true,
+        title: "Erro no Pedido",
+        message: errorMessage,
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+    }
   };
 
   const openConfirmDeliveryModal = (orderId: string) => {
     setValidationModal({
       isOpen: true,
       title: "Confirmar Entrega?",
-      message: `Você tem certeza que deseja marcar o pedido ${orderId} como entregue?`,
+      message: `Você tem certeza que deseja marcar o pedido como entregue?`,
       onConfirm: () => {
         handleMarkAsDelivered(orderId);
         setValidationModal({ ...validationModal, isOpen: false });
@@ -79,8 +138,91 @@ const PedidoPage: React.FC = () => {
     });
   };
 
-  const handleMarkAsDelivered = (orderId: string) => {
-    setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: "Entregue" } : order)));
+  const handleMarkAsDelivered = async (orderId: string) => {
+    try {
+      await axios.put(`http://localhost:3000/api/pedidos/${orderId}/deliver`);
+      setValidationModal({
+        isOpen: true,
+        title: "Status Alterado",
+        message: "O pedido foi marcado como entregue.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      fetchOrders(); // Refresh orders list
+    } catch (error) {
+      console.error("Erro ao marcar como entregue:", error);
+      setValidationModal({
+        isOpen: true,
+        title: "Erro",
+        message: "Não foi possível atualizar o status do pedido.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+    }
+  };
+
+  const openCancelModal = (orderId: string) => {
+    setValidationModal({
+      isOpen: true,
+      title: "Confirmar Cancelamento?",
+      message: "Você tem certeza que deseja cancelar este pedido?",
+      onConfirm: () => {
+        handleCancelOrder(orderId);
+        setValidationModal({ ...validationModal, isOpen: false });
+      },
+    });
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      await axios.delete(`http://localhost:3000/api/pedidos/${orderId}/cancel`);
+      setValidationModal({
+        isOpen: true,
+        title: "Pedido Cancelado",
+        message: "O pedido foi cancelado com sucesso.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      fetchOrders();
+    } catch (error) {
+      console.error("Erro ao cancelar pedido:", error);
+      setValidationModal({
+        isOpen: true,
+        title: "Erro",
+        message: "Não foi possível cancelar o pedido.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+    }
+  };
+
+  const openDeleteModal = (orderId: string) => {
+    setValidationModal({
+      isOpen: true,
+      title: "Confirmar Exclusão?",
+      message: "Você tem certeza que deseja apagar este pedido? Esta ação não pode ser desfeita.",
+      onConfirm: () => {
+        handleDeleteOrder(orderId);
+        setValidationModal({ ...validationModal, isOpen: false });
+      },
+    });
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      await axios.delete(`http://localhost:3000/api/pedidos/${orderId}`);
+      setValidationModal({
+        isOpen: true,
+        title: "Pedido Apagado",
+        message: "O pedido foi apagado com sucesso.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      fetchOrders();
+    } catch (error) {
+      console.error("Erro ao apagar pedido:", error);
+      setValidationModal({
+        isOpen: true,
+        title: "Erro",
+        message: "Não foi possível apagar o pedido.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+    }
   };
 
   return (
@@ -89,7 +231,7 @@ const PedidoPage: React.FC = () => {
       <div className="pedido-container">
         <h2>Fazer um Pedido</h2>
         <form onSubmit={handleSubmit} className="pedido-form">
-          {items.map((item, index) => (
+          {items.map((item) => (
             <div key={item.id} className="pedido-item-row">
               <div className="form-group product-group">
                 <label htmlFor={`product-select-${item.id}`}>Produto:</label>
@@ -112,18 +254,15 @@ const PedidoPage: React.FC = () => {
 
               <div className="form-group quantity-group">
                 <label htmlFor={`quantity-select-${item.id}`}>Qtd:</label>
-                <select
+                <input
+                  type="number"
                   id={`quantity-select-${item.id}`}
                   value={item.quantity}
                   onChange={(e) => handleItemChange(item.id, "quantity", Number(e.target.value))}
                   required
-                >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                    <option key={num} value={num}>
-                      {num}
-                    </option>
-                  ))}
-                </select>
+                  min="1"
+                  className="quantity-input"
+                />
               </div>
               {items.length > 1 && (
                 <button type="button" onClick={() => handleRemoveItem(item.id)} className="remove-item-button">
@@ -146,32 +285,45 @@ const PedidoPage: React.FC = () => {
           <h3>Histórico de Pedidos</h3>
           <div className="pedidos-list">
             {orders.map((order) => (
-              <div key={order.id} className="pedido-item">
+              <div key={order._id} className="pedido-item">
                 <div className="pedido-info">
-                  <span className="pedido-id">ID: {order.id}</span>
-                  <span className="pedido-receita">{order.recipe}</span>
+                  <span className="pedido-id">ID: {order._id}</span>
+                  <span className="pedido-receita">
+                    {order.produtos.map((p) => `${p.quantidade}x ${p.nome}`).join(", ")}
+                  </span>
                 </div>
-                {order.status === "Em preparo" && (
-                  <button onClick={() => openConfirmDeliveryModal(order.id)} className="confirm-delivery-button">
-                    Confirmar Entrega
-                  </button>
-                )}
-                <div className={`pedido-status status-${order.status.toLowerCase().replace(" ", "-")}`}>
-                  {order.status}
+                <div className="pedido-item-right">
+                  <div className="pedido-actions">
+                    {order.status === "Pendente" && (
+                      <>
+                        <button onClick={() => openConfirmDeliveryModal(order._id)} className="confirm-delivery-button">
+                          Entregue
+                        </button>
+                        <button onClick={() => openCancelModal(order._id)} className="cancel-order-button">
+                          Cancelar
+                        </button>
+                      </>
+                    )}
+                    <button onClick={() => openDeleteModal(order._id)} className="delete-order-button">
+                      Apagar
+                    </button>
+                  </div>
+                  <div className={`pedido-status ${statusMap[order.status]?.className || ''}`}>
+                    {statusMap[order.status]?.text || order.status}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Modal de Validação Genérico */}
         {validationModal.isOpen && (
           <div className="modal-overlay">
             <div className="modal-content">
               <h3>{validationModal.title}</h3>
               <p>{validationModal.message}</p>
               <div className="modal-actions">
-                {validationModal.title.includes("?") ? ( // Verifica se é uma pergunta para mostrar o botão de cancelar
+                {validationModal.title.includes("?") ? (
                   <button
                     onClick={() => setValidationModal({ ...validationModal, isOpen: false })}
                     className="cancel-button"

@@ -46,7 +46,6 @@ export async function createProdutoController(req: Request, res: Response) {
 export async function getAllProdutosOrByNameController(req: Request, res: Response) {
   try {
     if (req.body) {
-      console.log("cheguei no if?");
       const parse = await produtoSchema.pick({ nome: true }).safeParseAsync(req.body);
       if (!parse.success) {
         return res.status(400).json({
@@ -60,7 +59,6 @@ export async function getAllProdutosOrByNameController(req: Request, res: Respon
       }
       return res.status(200).json({ produtos });
     }
-    console.log("passei do if?");
     const produtos = await getAllProdutosModel();
     return res.status(200).json({ produtos });
   } catch (error) {
@@ -79,42 +77,22 @@ export async function updateProdutoByNameController(req: Request, res: Response)
         detalhes: parse.error.format(),
       });
     }
+
     if (parse.data.insumos) {
-      const insumosDoUsuario = parse.data.insumos;
-      const produto = await getProdutoByNameModel({ nome: nomeProduto });
-      if (!produto || produto.length === 0) {
-        return res.status(404).json({ message: "Produto não encontrado" });
-      }
-      const insumosProduto = produto.insumos;
-
-      const insumosAtualizados: { nome: string; quantidade: number }[] = [];
-
-      for (const insumoAntigo of insumosProduto) {
-        const insumoNovo = insumosDoUsuario.find((i: { nome: string }) => i.nome === insumoAntigo.nome);
-        if (insumoNovo) {
-          insumosAtualizados.push({
-            nome: insumoNovo.nome,
-            quantidade: insumoNovo.quantidade,
-          });
-        } else {
-          insumosAtualizados.push({
-            nome: insumoAntigo.nome,
-            quantidade: insumoAntigo.quantidade,
-          });
+      const insumosInexistentes = [];
+      for (let i = 0; i < parse.data.insumos.length; i++) {
+        const insumo = await getInsumoByNameModel({
+          nome: parse.data.insumos[i].nome,
+        });
+        if (!insumo || insumo.length === 0) {
+          insumosInexistentes.push(parse.data.insumos[i].nome);
         }
       }
-
-      for (const insumoNovo of insumosDoUsuario) {
-        const jaExiste = insumosAtualizados.some((i) => i.nome === insumoNovo.nome);
-        if (!jaExiste) {
-          insumosAtualizados.push({
-            nome: insumoNovo.nome,
-            quantidade: insumoNovo.quantidade,
-          });
-        }
+      if (insumosInexistentes.length > 0) {
+        return res.status(400).json({
+          message: `Os seguintes insumos não existem, favor cadastrar: ${insumosInexistentes.join(", ")}`,
+        });
       }
-
-      parse.data.insumos = insumosAtualizados;
     }
 
     const produtoAtualizado = await updateProdutoByNameModel(nomeProduto, parse.data);
