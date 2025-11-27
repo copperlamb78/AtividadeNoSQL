@@ -12,7 +12,7 @@ const availableProducts = [
 ];
 
 // Exemplo de dados do histórico de pedidos que virão do seu backend
-const orderHistory = [
+const initialOrderHistory = [
   { id: "A1B2-C3D4", recipe: "1x Bolo de Chocolate", status: "Entregue" },
   { id: "E5F6-G7H8", recipe: "2x Torta de Morango", status: "Em preparo" },
   { id: "I9J0-K1L2", recipe: "1x Cheesecake de Frutas Vermelhas", status: "Cancelado" },
@@ -28,6 +28,15 @@ interface OrderItem {
 
 const PedidoPage: React.FC = () => {
   const [items, setItems] = useState<OrderItem[]>([{ id: Date.now(), productName: "", quantity: 1 }]);
+  const [orders, setOrders] = useState(initialOrderHistory);
+
+  // Estado para o modal de validação/confirmação genérico
+  const [validationModal, setValidationModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const handleAddItem = () => {
     setItems([...items, { id: Date.now(), productName: "", quantity: 1 }]);
@@ -50,7 +59,28 @@ const PedidoPage: React.FC = () => {
     }
     // Aqui você adicionaria a lógica para enviar o pedido para a sua API
     console.log("Pedido realizado com os seguintes itens:", validItems);
-    alert(`Pedido realizado com ${validItems.length} tipo(s) de produto(s)!`);
+    setValidationModal({
+      isOpen: true,
+      title: "Pedido Realizado!",
+      message: `Pedido realizado com ${validItems.length} tipo(s) de produto(s)!`,
+      onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+    });
+  };
+
+  const openConfirmDeliveryModal = (orderId: string) => {
+    setValidationModal({
+      isOpen: true,
+      title: "Confirmar Entrega?",
+      message: `Você tem certeza que deseja marcar o pedido ${orderId} como entregue?`,
+      onConfirm: () => {
+        handleMarkAsDelivered(orderId);
+        setValidationModal({ ...validationModal, isOpen: false });
+      },
+    });
+  };
+
+  const handleMarkAsDelivered = (orderId: string) => {
+    setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: "Entregue" } : order)));
   };
 
   return (
@@ -115,12 +145,17 @@ const PedidoPage: React.FC = () => {
         <div className="historico-pedidos-container">
           <h3>Histórico de Pedidos</h3>
           <div className="pedidos-list">
-            {orderHistory.map((order) => (
+            {orders.map((order) => (
               <div key={order.id} className="pedido-item">
                 <div className="pedido-info">
                   <span className="pedido-id">ID: {order.id}</span>
                   <span className="pedido-receita">{order.recipe}</span>
                 </div>
+                {order.status === "Em preparo" && (
+                  <button onClick={() => openConfirmDeliveryModal(order.id)} className="confirm-delivery-button">
+                    Confirmar Entrega
+                  </button>
+                )}
                 <div className={`pedido-status status-${order.status.toLowerCase().replace(" ", "-")}`}>
                   {order.status}
                 </div>
@@ -128,6 +163,32 @@ const PedidoPage: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Modal de Validação Genérico */}
+        {validationModal.isOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>{validationModal.title}</h3>
+              <p>{validationModal.message}</p>
+              <div className="modal-actions">
+                {validationModal.title.includes("?") ? ( // Verifica se é uma pergunta para mostrar o botão de cancelar
+                  <button
+                    onClick={() => setValidationModal({ ...validationModal, isOpen: false })}
+                    className="cancel-button"
+                  >
+                    Cancelar
+                  </button>
+                ) : null}
+                <button
+                  onClick={validationModal.onConfirm}
+                  className={validationModal.title.includes("?") ? "confirm-delivery-modal-button" : "confirm-button"}
+                >
+                  {validationModal.title.includes("?") ? "Sim" : "OK"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <Navbar />
     </>
