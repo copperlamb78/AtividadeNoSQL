@@ -7,16 +7,6 @@
   background-color: #f4f4f4;
 }
 
-input {
-  color:#000000
-}
-
-select {
-  color:#000000
-}
-
-
-
 .insumo-container h2 {
   color: #333;
   font-family: "Pacifico", cursive;
@@ -30,7 +20,6 @@ select {
 .insumo-form {
   max-width: 500px;
   background-color: #ffffff;
-  color: #000000;
   padding: 30px;
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -126,10 +115,19 @@ select {
   border-left: 5px solid #9f164c;
 }
 
+.insumo-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 1; /* Faz esta div ocupar o espaço disponível */
+  margin-right: 15px; /* Adiciona um espaço antes dos botões */
+}
+
 .insumo-nome {
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
+  margin-right: 10px; /* Evita que o nome cole na quantidade */
 }
 
 .insumo-quantidade {
@@ -139,4 +137,152 @@ select {
   padding: 4px 10px;
   border-radius: 15px;
   font-weight: 500;
+}
+
+/* Ações do Insumo (Editar/Apagar) */
+.insumo-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+  gap: 6px; /* Espaço entre ícone e texto */
+}
+
+/* Esconde o ícone por padrão (telas maiores) */
+.action-button .icon {
+  display: none;
+}
+
+.edit-button {
+  background-color: #ffc107;
+  color: #212529;
+  width: 70px;
+}
+.edit-button:hover {
+  background-color: #e0a800;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+}
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.action-button:active {
+  transform: scale(0.95);
+}
+
+/* Media Query para telas de celular (ex: até 600px de largura) */
+@media (max-width: 600px) {
+  /* Esconde o texto do botão */
+  .action-button .button-text {
+    display: none;
+  }
+
+  /* Mostra o ícone */
+  .action-button .icon {
+    display: block;
+    font-size: 1rem;
+  }
+
+  /* Ajusta o botão para ficar quadrado/circular */
+  .action-button {
+    padding: 8px;
+    width: 36px;
+    height: 36px;
+    margin: 0 5px;
+  }
+}
+
+/* --- Estilos dos Modais --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  border-top: 5px solid #9f164c;
+}
+
+.modal-content h3 {
+  font-family: "Pacifico", cursive;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.modal-content p {
+  margin-bottom: 25px;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-actions button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+}
+
+.confirm-delete-button,
+.confirm-edit-button {
+  background-color: #9f164c;
+  color: white;
+}
+
+.confirm-delete-button:hover,
+.confirm-edit-button:hover {
+  background-color: #7d113c;
+}
+
+.edit-modal .form-group {
+  text-align: left;
 }
