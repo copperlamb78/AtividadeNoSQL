@@ -7,6 +7,16 @@
   background-color: #f4f4f4;
 }
 
+input {
+  color:#000000
+}
+
+select {
+  color:#000000
+}
+
+
+
 .insumo-container h2 {
   color: #333;
   font-family: "Pacifico", cursive;
@@ -20,6 +30,7 @@
 .insumo-form {
   max-width: 500px;
   background-color: #ffffff;
+  color: #000000;
   padding: 30px;
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);

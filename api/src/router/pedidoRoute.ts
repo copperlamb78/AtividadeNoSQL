@@ -3,6 +3,7 @@ import {
   cancelPedidoByIdController,
   createPedidoController,
   deletePedidoByIdController,
+  deliverPedidoByIdController,
   getAllPedidosOrByIdController,
 } from "../controller/pedidoController.ts";
 
@@ -12,6 +13,8 @@ pedidoRoute.post("/", createPedidoController);
 
 pedidoRoute.get("/", getAllPedidosOrByIdController);
 pedidoRoute.get("/:id", getAllPedidosOrByIdController);
+
+pedidoRoute.put("/:id/deliver", deliverPedidoByIdController);
 
 pedidoRoute.delete("/:id", deletePedidoByIdController);
 

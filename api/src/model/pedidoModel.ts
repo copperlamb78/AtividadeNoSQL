@@ -56,3 +56,13 @@ export async function cancelPedidoByIdModel(id: string) {
   );
   return pedidoCancelado;
 }
+
+export async function deliverPedidoByIdModel(id: string) {
+  const db = await connectDB();
+  const pedidoCollection = db.collection("pedidos");
+  const pedidoEntregue = await pedidoCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { status: "Entregue" } }
+  );
+  return pedidoEntregue;
+}

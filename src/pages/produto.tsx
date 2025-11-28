@@ -1,49 +1,60 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header"; // Corrigido para o caminho correto
 import Navbar from "../components/Navbar";
 import "./produto.css";
+import { fetchInsumos } from "./insumo";
+import axios from "axios";
 
 interface Ingredient {
-  id: number;
+  id: string | number;
   name: string;
   quantity: string; // Usar string para flexibilidade (ex: "100g", "1 xícara")
 }
 
 interface Recipe {
-  id: number;
+  id: string;
   name: string;
   price: number;
   ingredients: Ingredient[];
 }
 
-// Exemplo de dados de receitas cadastradas que virão do seu backend
-const createdRecipes = [
-  {
-    id: 1,
-    name: "Bolo de Chocolate",
-    price: 35.0,
-    ingredients: [
-      { id: 1, name: "Chocolate em Pó", quantity: "200g" },
-      { id: 2, name: "Farinha", quantity: "300g" },
-    ],
-  },
-  { id: 2, name: "Torta de Morango", price: 45.5, ingredients: [{ id: 1, name: "Morangos", quantity: "500g" }] },
-  {
-    id: 3,
-    name: "Cupcake de Baunilha",
-    price: 8.0,
-    ingredients: [{ id: 1, name: "Essência de Baunilha", quantity: "10ml" }],
-  },
-  { id: 4, name: "Cheesecake de Frutas Vermelhas", price: 55.0, ingredients: [] },
-];
+async function fetchRecipes() {
+  try {
+    const res = await axios.get("http://localhost:3000/api/produtos");
+    if (res.data && Array.isArray(res.data.produtos)) {
+      // Map backend data to frontend interface
+      return res.data.produtos.map((produto: any) => ({
+        id: produto._id,
+        name: produto.nome,
+        price: produto.preco,
+        ingredients: produto.insumos.map((insumo: any, index: number) => ({
+          id: `${produto._id}-ing-${index}`, // Create a unique id for ingredients
+          name: insumo.nome,
+          quantity: `${insumo.quantidade}`, // Convert quantity to string for consistency
+        })),
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error("Erro ao buscar receitas:", error);
+    return [];
+  }
+}
 
 const ProdutoPage: React.FC = () => {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [insumosEmEstoque, setInsumosEmEstoque] = useState<{ id: number; nome: string; quantidade: number; unidade: string; custo: number }[]>([]);
+
+  useEffect(() => {
+    fetchInsumos().then(setInsumosEmEstoque);
+    fetchRecipes().then(setRecipes);
+  }, []);
   const [recipeName, setRecipeName] = useState("");
   const [price, setPrice] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ id: Date.now(), name: "", quantity: "" }]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [recipeToDelete, setRecipeToDelete] = useState<number | null>(null);
+  const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
@@ -60,44 +71,76 @@ const ProdutoPage: React.FC = () => {
     setIngredients([...ingredients, { id: Date.now(), name: "", quantity: "" }]);
   };
 
-  const handleRemoveIngredient = (id: number) => {
+  const handleRemoveIngredient = (id: number | string) => {
     setIngredients(ingredients.filter((ing) => ing.id !== id));
   };
 
-  const handleIngredientChange = (id: number, field: keyof Ingredient, value: string) => {
+  const handleIngredientChange = (id: number | string, field: keyof Ingredient, value: string) => {
     setIngredients(ingredients.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const validIngredients = ingredients.filter((ing) => ing.name && ing.quantity);
     if (!recipeName || !price) {
-      alert("Por favor, preencha o nome e o valor da receita.");
+      setValidationModal({
+        isOpen: true,
+        title: "Campos incompletos",
+        message: "Por favor, preencha o nome e o valor da receita.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
       return;
     }
     if (validIngredients.length === 0) {
-      alert("Adicione pelo menos um ingrediente válido.");
+      setValidationModal({
+        isOpen: true,
+        title: "Ingredientes faltando",
+        message: "Adicione pelo menos um ingrediente válido.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
       return;
     }
 
     const newRecipe = {
       nome: recipeName,
       preco: parseFloat(price),
-      insumos: validIngredients.map(({ name, quantity }) => ({ nome: name, quantidade: quantity })),
+      insumos: validIngredients.map(({ name, quantity }) => ({
+        nome: name,
+        quantidade: parseFloat(quantity) || 0,
+      })),
     };
 
-    // Lógica para enviar a nova receita para a API
-    console.log("Nova Receita:", newRecipe);
-    setValidationModal({
-      isOpen: true,
-      title: "Sucesso!",
-      message: `Receita "${recipeName}" adicionada com sucesso!`,
-      onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
-    });
+    try {
+      await axios.post("http://localhost:3000/api/produtos", newRecipe);
+      setValidationModal({
+        isOpen: true,
+        title: "Sucesso!",
+        message: `Receita "${recipeName}" adicionada com sucesso!`,
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      fetchRecipes().then(setRecipes);
+      fetchInsumos().then(setInsumosEmEstoque);
+      // Limpa o formulário
+      setRecipeName("");
+      setPrice("");
+      setIngredients([{ id: Date.now(), name: "", quantity: "" }]);
+    } catch (error) {
+      console.error("Erro ao adicionar receita:", error);
+      let errorMessage = "Ocorreu um erro ao adicionar a receita.";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      setValidationModal({
+        isOpen: true,
+        title: "Erro ao Adicionar",
+        message: errorMessage,
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+    }
   };
 
-  const openDeleteModal = (id: number) => {
-    setRecipeToDelete(id);
+  const openDeleteModal = (name: string) => {
+    setRecipeToDelete(name);
     setIsModalOpen(true);
   };
 
@@ -106,23 +149,33 @@ const ProdutoPage: React.FC = () => {
     setRecipeToDelete(null);
   };
 
-  const handleDeleteRecipe = () => {
-    if (recipeToDelete !== null) {
-      console.log(`Deletando receita com ID: ${recipeToDelete}`);
+  const handleDeleteRecipe = async () => {
+    if (recipeToDelete === null) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/produtos/`, { data: { nome: recipeToDelete } });
       setValidationModal({
         isOpen: true,
         title: "Receita Apagada",
-        message: `A receita com ID ${recipeToDelete} foi apagada com sucesso! (simulação)`,
+        message: "A receita foi apagada com sucesso.",
         onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
       });
+      fetchRecipes().then(setRecipes);
       closeDeleteModal();
+    } catch (error) {
+      console.error("Erro ao apagar receita:", error);
+      setValidationModal({
+        isOpen: true,
+        title: "Erro ao Apagar",
+        message: "Não foi possível apagar a receita.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
     }
   };
 
   // --- Funções para o Modal de Edição ---
 
   const openEditModal = (recipe: Recipe) => {
-    // Cria uma cópia profunda para evitar mutação direta do estado original
     setRecipeToEdit(JSON.parse(JSON.stringify(recipe)));
     setIsEditModalOpen(true);
   };
@@ -146,7 +199,7 @@ const ProdutoPage: React.FC = () => {
     }
   };
 
-  const handleEditIngredientChange = (id: number, field: keyof Ingredient, value: string) => {
+  const handleEditIngredientChange = (id: number | string, field: keyof Ingredient, value: string) => {
     if (recipeToEdit) {
       const updatedIngredients = recipeToEdit.ingredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
@@ -162,7 +215,7 @@ const ProdutoPage: React.FC = () => {
     }
   };
 
-  const handleRemoveIngredientFromEdit = (id: number) => {
+  const handleRemoveIngredientFromEdit = (id: number | string) => {
     if (recipeToEdit) {
       const updatedIngredients = recipeToEdit.ingredients.filter((ing) => ing.id !== id);
       setRecipeToEdit({ ...recipeToEdit, ingredients: updatedIngredients });
@@ -170,15 +223,9 @@ const ProdutoPage: React.FC = () => {
   };
 
   const handleUpdateRecipe = () => {
-    setValidationModal({
-      isOpen: true,
-      title: "Confirmar Alterações?",
-      message: "Tem certeza que deseja salvar as alterações?",
-      onConfirm: confirmUpdateRecipe,
-    });
     if (!recipeToEdit) return;
 
-    const { name, price, ingredients } = recipeToEdit;
+    const { name, price } = recipeToEdit;
     if (!name || !price) {
       setValidationModal({
         isOpen: true,
@@ -188,20 +235,47 @@ const ProdutoPage: React.FC = () => {
       });
       return;
     }
-  };
-
-  const confirmUpdateRecipe = () => {
-    if (!recipeToEdit) return;
-    // Lógica para enviar a receita atualizada para a API
-    console.log("Receita Atualizada:", recipeToEdit);
+    
     setValidationModal({
       isOpen: true,
-      title: "Sucesso!",
-      message: `Receita "${recipeToEdit.name}" atualizada com sucesso! (simulação)`,
-      onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      title: "Confirmar Alterações?",
+      message: "Tem certeza que deseja salvar as alterações?",
+      onConfirm: confirmUpdateRecipe,
     });
-    setIsEditModalOpen(false);
-    setRecipeToEdit(null);
+  };
+
+  const confirmUpdateRecipe = async () => {
+    if (!recipeToEdit) return;
+
+    const updatedRecipePayload = {
+      nome: recipeToEdit.name,
+      preco: recipeToEdit.price,
+      insumos: recipeToEdit.ingredients.map((ing) => ({
+        nome: ing.name,
+        quantidade: parseFloat(ing.quantity) || 0,
+      })),
+    };
+
+    try {
+      await axios.put(`http://localhost:3000/api/produtos/${recipeToEdit.name}`, updatedRecipePayload);
+      setValidationModal({
+        isOpen: true,
+        title: "Sucesso!",
+        message: `Receita "${recipeToEdit.name}" atualizada com sucesso!`,
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      fetchRecipes().then(setRecipes);
+      setIsEditModalOpen(false);
+      setRecipeToEdit(null);
+    } catch (error) {
+      console.error("Erro ao atualizar receita:", error);
+      setValidationModal({
+        isOpen: true,
+        title: "Erro ao Atualizar",
+        message: "Não foi possível atualizar a receita. Verifique os dados.",
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+    }
   };
 
   return (
@@ -239,13 +313,19 @@ const ProdutoPage: React.FC = () => {
             <div key={ingredient.id} className="ingrediente-item-row">
               <div className="form-group ingrediente-group">
                 <label htmlFor={`ing-name-${ingredient.id}`}>Ingrediente:</label>
-                <input
-                  type="text"
+                <select
                   id={`ing-name-${ingredient.id}`}
                   value={ingredient.name}
                   onChange={(e) => handleIngredientChange(ingredient.id, "name", e.target.value)}
-                  placeholder="Ex: Farinha de trigo"
-                />
+                >
+                  <option value="">Selecione um insumo</option>
+
+                  {insumosEmEstoque.map((insumo) => (
+                    <option key={insumo.id} value={insumo.nome}>
+                      {insumo.nome} — {insumo.quantidade} {insumo.unidade}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-group quantidade-group">
                 <label htmlFor={`ing-qty-${ingredient.id}`}>Qtd:</label>
@@ -282,7 +362,7 @@ const ProdutoPage: React.FC = () => {
       <div className="catalogo-container">
         <h2>Catálogo de Receitas</h2>
         <div className="receitas-grid">
-          {createdRecipes.map((recipe) => (
+          {recipes.map((recipe) => (
             <div key={recipe.id} className="receita-card">
               {/* Informações da receita movidas para fora de uma div separada para simplificar */}
               <h4 className="receita-nome">{recipe.name}</h4>
@@ -292,7 +372,7 @@ const ProdutoPage: React.FC = () => {
                 <button className="edit-button" onClick={() => openEditModal(recipe as Recipe)}>
                   Editar
                 </button>
-                <button className="delete-button" onClick={() => openDeleteModal(recipe.id)}>
+                <button className="delete-button" onClick={() => openDeleteModal(recipe.name)}>
                   Apagar
                 </button>
               </div>
@@ -348,12 +428,17 @@ const ProdutoPage: React.FC = () => {
             {recipeToEdit.ingredients.map((ing) => (
               <div key={ing.id} className="ingrediente-item-row">
                 <div className="form-group ingrediente-group">
-                  <input
-                    type="text"
+                  <select
                     value={ing.name}
                     onChange={(e) => handleEditIngredientChange(ing.id, "name", e.target.value)}
-                    placeholder="Nome do ingrediente"
-                  />
+                  >
+                    <option value="">Selecione um insumo</option>
+                    {insumosEmEstoque.map((insumo) => (
+                      <option key={insumo.id} value={insumo.nome}>
+                        {insumo.nome} — {insumo.quantidade} {insumo.unidade}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group quantidade-group">
                   <input

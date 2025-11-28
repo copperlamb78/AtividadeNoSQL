@@ -9,13 +9,26 @@ const unitOptions = ["Kg", "L", "Un", "g", "ml"];
 // Exemplo de dados de insumos em estoque que virão do seu backend
 
 
-async function fetchInsumos() {
+export async function fetchInsumos() {
   try {
-    const res: { data: [{ id: number; nome: string; quantidade: number; unidade: string; custo: number }]} = await axios.get("http://localhost:3000/api/insumos");
-    return res.data;
+    const res = await axios.get("http://localhost:3000/api/insumos");
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+    return [];
   } catch (error) {
     console.error("Erro ao buscar insumos:", error);
     return [];
+  }
+}
+
+async function adicionarInsumo( insumo: { nome: string; quantidade: number; unidade: string; custo: number }) {
+  try {
+    const res = await axios.post("http://localhost:3000/api/insumos", insumo);
+    return res.data;
+  } catch (error) {
+    console.error("Erro ao adicionar insumo:", error);
+    return null;
   }
 }
 
@@ -44,9 +57,10 @@ const InsumoPage: React.FC = () => {
       unidade,
       custo: parseFloat(custo),
     };
+    adicionarInsumo(novoInsumo).then(() => {
+      fetchInsumos().then(setInsumosEmEstoque)
+    })
 
-    // Aqui você adicionaria a lógica para enviar o novo insumo para a sua API
-    console.log("Novo Insumo Adicionado:", novoInsumo);
     alert(`Insumo "${nome}" adicionado ao estoque com sucesso!`);
 
     // Limpa o formulário após o envio
@@ -54,6 +68,8 @@ const InsumoPage: React.FC = () => {
     setQuantidade("");
     setUnidade("Un");
     setCusto("");
+
+    
   };
 
   return (
@@ -84,7 +100,7 @@ const InsumoPage: React.FC = () => {
                 onChange={(e) => setQuantidade(e.target.value)}
                 required
                 placeholder="Ex: 2"
-                min="0"
+                min={"0"}
               />
             </div>
             <div className="form-group" style={{ flex: 1 }}>
@@ -121,14 +137,18 @@ const InsumoPage: React.FC = () => {
         <div className="estoque-list-container">
           <h3>Insumos em Estoque</h3>
           <div className="insumo-list">
-            {insumosEmEstoque.map((insumo) => (
+            {insumosEmEstoque.length === 0 ? (
+              <span>Carregando...</span>
+            ) : (
+              insumosEmEstoque.map((insumo) => (
               <div key={insumo.id} className="insumo-item">
                 <span className="insumo-nome">{insumo.nome}</span>
                 <span className="insumo-quantidade">
                   {insumo.quantidade} {insumo.unidade}
                 </span>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </div>

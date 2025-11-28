@@ -4,6 +4,7 @@ import {
   cancelPedidoByIdModel,
   createPedidoModel,
   deletePedidoByIdModel,
+  deliverPedidoByIdModel,
   getAllPedidosModel,
   getPedidoByIdModel,
   getPedidoByNameModel,
@@ -80,6 +81,24 @@ export async function cancelPedidoByIdController(req: Request, res: Response) {
   } catch (error) {
     console.error("Error ao cancelar pedido: ", error);
     return res.status(500).json({ message: "Error ao cancelar pedido", error });
+  }
+}
+
+export async function deliverPedidoByIdController(req: Request, res: Response) {
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(400).json({ message: "Id do pedido é obrigatório" });
+    }
+    const pedidoToDeliver = await getPedidoByIdModel(id);
+    if (!pedidoToDeliver) {
+      return res.status(404).json({ message: "Pedido não encontrado" });
+    }
+    const pedidoEntregue = await deliverPedidoByIdModel(id);
+    return res.status(200).json(pedidoEntregue);
+  } catch (error) {
+    console.error("Error ao entregar pedido: ", error);
+    return res.status(500).json({ message: "Error ao entregar pedido", error });
   }
 }
 

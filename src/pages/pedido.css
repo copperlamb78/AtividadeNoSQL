@@ -221,12 +221,50 @@ body {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-left: auto; /* Empurra o botão para a esquerda */
-  margin-right: 15px; /* Adiciona um espaço antes do status */
 }
 
 .confirm-delivery-button:hover {
   background-color: #218838;
+}
+
+.pedido-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pedido-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.cancel-order-button, .delete-order-button {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-order-button {
+  background-color: #ffc107; /* Yellow */
+  color: #333;
+}
+
+.cancel-order-button:hover {
+  background-color: #e0a800;
+}
+
+.delete-order-button {
+  background-color: #dc3545; /* Red */
+}
+
+.delete-order-button:hover {
+  background-color: #c82333;
 }
 
 /* Estilos para o Modal de Confirmação/Validação */
