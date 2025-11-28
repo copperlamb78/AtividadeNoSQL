@@ -46,6 +46,7 @@
   font-size: 1rem;
   background-color: #f9f9f9;
   transition: border-color 0.2s ease-in-out;
+  color: #333;
 }
 
 .form-group input:focus {

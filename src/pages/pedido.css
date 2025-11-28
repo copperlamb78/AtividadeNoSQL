@@ -52,6 +52,7 @@ body {
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   transition: border-color 0.2s ease-in-out;
+  color: #333;
 }
 
 .form-group select:focus {
