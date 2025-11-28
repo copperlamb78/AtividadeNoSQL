@@ -3,7 +3,7 @@ import { connectDB } from "../db/mongodb.ts";
 
 export async function createPedidoModel(
   produtos: Array<{ nome: string; quantidade: number }>,
-  insumosUsados: Array<{ nome: string; quantidade: number }>,
+  insumosUsados: Array<{ nome: string; quantidade: number; custo: number }>,
   ReceitaTotal: number,
   data: string
 ) {
@@ -60,9 +60,6 @@ export async function cancelPedidoByIdModel(id: string) {
 export async function deliverPedidoByIdModel(id: string) {
   const db = await connectDB();
   const pedidoCollection = db.collection("pedidos");
-  const pedidoEntregue = await pedidoCollection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { status: "Entregue" } }
-  );
+  const pedidoEntregue = await pedidoCollection.updateOne({ _id: new ObjectId(id) }, { $set: { status: "Entregue" } });
   return pedidoEntregue;
 }

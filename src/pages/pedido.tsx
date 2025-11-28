@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId, useRef } from "react";
 import "./pedido.css";
 import Header from "../components/Header";
 import Navbar from "../components/Navbar";
@@ -10,8 +10,14 @@ interface Product {
   name: string;
 }
 
+// tipo do produto vindo do backend
+type BackendProduto = {
+  _id?: string;
+  nome: string;
+};
+
 interface OrderItem {
-  id: number;
+  id: string | number;
   productName: string;
   quantity: number;
 }
@@ -31,7 +37,18 @@ const statusMap = {
 };
 
 const PedidoPage: React.FC = () => {
-  const [items, setItems] = useState<OrderItem[]>([{ id: Date.now(), productName: "", quantity: 1 }]);
+  // id generator safe for render (avoid Date.now()/Math.random in render)
+  const baseId = useId();
+  const idCounterRef = useRef(0);
+  const genId = () => `${baseId}-${++idCounterRef.current}`;
+
+  // avoid calling genId() during render (which would mutate ref.current)
+  const initialItem = { id: `${baseId}-0`, productName: "", quantity: 1 } as OrderItem;
+  const [items, setItems] = useState<OrderItem[]>(() => [initialItem]);
+  useEffect(() => {
+    // initialize counter so first genId() returns baseId-1
+    idCounterRef.current = 0;
+  }, []);
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [validationModal, setValidationModal] = useState({
@@ -42,16 +59,14 @@ const PedidoPage: React.FC = () => {
   });
 
   // Fetch initial data
-  useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-  }, []);
 
   const fetchProducts = async () => {
     try {
       const res = await axios.get("http://localhost:3000/api/produtos");
       if (res.data && Array.isArray(res.data.produtos)) {
-        setAvailableProducts(res.data.produtos.map((p: any) => ({ id: p._id, name: p.nome })));
+        setAvailableProducts(
+          (res.data.produtos as BackendProduto[]).map((p) => ({ id: p._id ?? p.nome, name: p.nome }))
+        );
       }
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
@@ -70,15 +85,15 @@ const PedidoPage: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now(), productName: "", quantity: 1 }]);
+    const novo: OrderItem = { id: genId(), productName: "", quantity: 1 };
+    setItems((prev) => [...prev, novo]);
   };
 
-  const handleRemoveItem = (id: number) => {
-    setItems(items.filter((item) => item.id !== id));
+  const handleRemoveItem = (id: string | number) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
-
-  const handleItemChange = (id: number, field: keyof OrderItem, value: string | number) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  const handleItemChange = (id: string | number, field: keyof OrderItem, value: string | number) => {
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -110,7 +125,7 @@ const PedidoPage: React.FC = () => {
         onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
       });
       fetchOrders(); // Refresh orders list
-      setItems([{ id: Date.now(), productName: "", quantity: 1 }]); // Reset form
+      setItems([initialItem]); // Reset form
     } catch (error) {
       console.error("Erro ao criar pedido:", error);
       let errorMessage = "Não foi possível realizar o pedido.";
@@ -225,6 +240,25 @@ const PedidoPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        if (!mounted) return;
+        await fetchProducts();
+        if (!mounted) return;
+        await fetchOrders();
+      } catch (err) {
+        // already handled inside functions, but avoid uncaught
+        console.error("Erro ao carregar dados iniciais:", err);
+      }
+    };
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <>
       <Header />
@@ -308,7 +342,7 @@ const PedidoPage: React.FC = () => {
                       Apagar
                     </button>
                   </div>
-                  <div className={`pedido-status ${statusMap[order.status]?.className || ''}`}>
+                  <div className={`pedido-status ${statusMap[order.status]?.className || ""}`}>
                     {statusMap[order.status]?.text || order.status}
                   </div>
                 </div>

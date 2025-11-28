@@ -1,5 +1,11 @@
 import type { Request, Response } from "express";
-import { createInsumoModel, deleteInsumoByNameModel, getAllInsumosModel, getInsumoByNameModel, updateInsumoByNameModel } from "../model/insumosModel.ts";
+import {
+  createInsumoModel,
+  deleteInsumoByNameModel,
+  getAllInsumosModel,
+  getInsumoByNameModel,
+  updateInsumoByNameModel,
+} from "../model/insumosModel.ts";
 import { insumoSchema, insumoSchemaOptional, nomeInsumo } from "../schemas/insumosSchema.ts";
 
 export async function createInsumoController(req: Request, res: Response) {
@@ -11,12 +17,14 @@ export async function createInsumoController(req: Request, res: Response) {
         detalhes: parse.error.format(),
       });
     }
+    const dataAtualizacao = new Date().toISOString();
     const { nome, quantidade, unidade, custo } = parse.data;
     const novoInsumo = {
       nome,
       quantidade,
       unidade,
       custo,
+      dataAtualizacao,
     };
     const insumo = await createInsumoModel(novoInsumo);
     return res.status(201).json(insumo);
@@ -61,7 +69,8 @@ export async function updateInsumoByNameController(req: Request, res: Response) 
         detalhes: parse.error.format(),
       });
     }
-    const insumo = await updateInsumoByNameModel(nomeInsumo, parse.data);
+    const dataAtualizacao = new Date().toISOString();
+    const insumo = await updateInsumoByNameModel(nomeInsumo, parse.data, dataAtualizacao);
     return res.status(200).json(insumo);
   } catch (error) {
     console.error("Error ao atualizar insumo: ", error);

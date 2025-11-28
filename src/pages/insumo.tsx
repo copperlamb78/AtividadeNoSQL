@@ -7,9 +7,19 @@ import "./insumo.css";
 
 const unitOptions = ["Kg", "L", "Un", "g", "ml"];
 
+type Insumo = {
+  id?: number | string;
+  nome: string;
+  quantidade: number;
+  unidade: string;
+  custo: number;
+};
+
+const initialInsumos: Insumo[] = [];
+
 // Exemplo de dados de insumos em estoque que virão do seu backend
 
-export async function fetchInsumos() {
+async function fetchInsumos() {
   try {
     const res = await axios.get("http://localhost:3000/api/insumos");
     if (Array.isArray(res.data)) {
@@ -34,7 +44,8 @@ async function adicionarInsumo(insumo: { nome: string; quantidade: number; unida
 
 async function atualizarInsumo(insumo: Insumo) {
   try {
-    const res = await axios.put(`http://localhost:3000/api/insumos/${insumo.id}`, insumo);
+    // envia pelo nome para se aproximar da API do backend
+    const res = await axios.put(`http://localhost:3000/api/insumos/${encodeURIComponent(insumo.nome)}`, insumo);
     return res.data;
   } catch (error) {
     console.error("Erro ao atualizar insumo:", error);
@@ -42,9 +53,10 @@ async function atualizarInsumo(insumo: Insumo) {
   }
 }
 
-async function deletarInsumo(id: number) {
+async function deletarInsumo(nome: string) {
   try {
-    const res = await axios.delete(`http://localhost:3000/api/insumos/${id}`);
+    // backend espera o nome no body (rota DELETE "/"), então enviamos no data
+    const res = await axios.delete(`http://localhost:3000/api/insumos`, { data: { nome } });
     return res.data;
   } catch (error) {
     console.error("Erro ao deletar insumo:", error);
@@ -77,9 +89,9 @@ const InsumoPage: React.FC = () => {
       unidade,
       custo: parseFloat(custo),
     };
-    // adicionarInsumo(novoInsumo).then(() => {
-    //   fetchInsumos().then(setInsumosEmEstoque);
-    // });
+    adicionarInsumo(novoInsumo).then(() => {
+      fetchInsumos().then(setInsumosEmEstoque);
+    });
 
     // Simula a adição localmente
     setInsumosEmEstoque([...insumosEmEstoque, novoInsumo]);
@@ -96,7 +108,7 @@ const InsumoPage: React.FC = () => {
   // --- Estados e Funções para os Modais ---
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [insumoToDelete, setInsumoToDelete] = useState<number | null>(null);
+  const [insumoToDelete, setInsumoToDelete] = useState<string | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [insumoToEdit, setInsumoToEdit] = useState<Insumo | null>(null);
@@ -110,8 +122,8 @@ const InsumoPage: React.FC = () => {
 
   // --- Funções para o Modal de Exclusão ---
 
-  const openDeleteModal = (id: number) => {
-    setInsumoToDelete(id);
+  const openDeleteModal = (nome: string) => {
+    setInsumoToDelete(nome);
     setIsDeleteModalOpen(true);
   };
 
@@ -122,18 +134,18 @@ const InsumoPage: React.FC = () => {
 
   const handleDeleteInsumo = () => {
     if (insumoToDelete !== null) {
-      // deletarInsumo(insumoToDelete).then(() => {
-      //   fetchInsumos().then(setInsumosEmEstoque);
-      //   setValidationModal({
-      //     isOpen: true,
-      //     title: "Insumo Apagado",
-      //     message: `O insumo foi apagado com sucesso!`,
-      //     onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
-      //   });
-      //   closeDeleteModal();
-      // });
-      // Simula a exclusão localmente
-      setInsumosEmEstoque(insumosEmEstoque.filter((insumo) => insumo.id !== insumoToDelete));
+      deletarInsumo(insumoToDelete).then(() => {
+        fetchInsumos().then(setInsumosEmEstoque);
+        setValidationModal({
+          isOpen: true,
+          title: "Insumo Apagado",
+          message: `O insumo foi apagado com sucesso!`,
+          onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+        });
+        closeDeleteModal();
+      });
+      // Simula a exclusão localmente (filtra por nome)
+      setInsumosEmEstoque(insumosEmEstoque.filter((insumo) => insumo.nome !== insumoToDelete));
       closeDeleteModal();
     }
   };
@@ -170,16 +182,16 @@ const InsumoPage: React.FC = () => {
   const confirmUpdateInsumo = () => {
     if (!insumoToEdit) return;
 
-    // atualizarInsumo(insumoToEdit).then(() => {
-    //   fetchInsumos().then(setInsumosEmEstoque);
-    //   setValidationModal({
-    //     isOpen: true,
-    //     title: "Sucesso!",
-    //     message: `Insumo "${insumoToEdit.nome}" atualizado com sucesso!`,
-    //     onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
-    //   });
-    //   closeEditModal();
-    // });
+    atualizarInsumo(insumoToEdit).then(() => {
+      fetchInsumos().then(setInsumosEmEstoque);
+      setValidationModal({
+        isOpen: true,
+        title: "Sucesso!",
+        message: `Insumo "${insumoToEdit.nome}" atualizado com sucesso!`,
+        onConfirm: () => setValidationModal({ ...validationModal, isOpen: false }),
+      });
+      closeEditModal();
+    });
     // Simula a atualização localmente
     setInsumosEmEstoque(insumosEmEstoque.map((insumo) => (insumo.id === insumoToEdit.id ? insumoToEdit : insumo)));
     closeEditModal();
@@ -254,7 +266,7 @@ const InsumoPage: React.FC = () => {
               <span>Carregando...</span>
             ) : (
               insumosEmEstoque.map((insumo) => (
-                <div key={insumo.id} className="insumo-item">
+                <div key={insumo.nome || insumo.id} className="insumo-item">
                   <div className="insumo-info">
                     <span className="insumo-nome">{insumo.nome}</span>
                     <span className="insumo-quantidade">
@@ -266,7 +278,7 @@ const InsumoPage: React.FC = () => {
                       <FaEdit className="icon" />
                       <span className="button-text">Editar</span>
                     </button>
-                    <button className="action-button delete-button" onClick={() => openDeleteModal(insumo.id)}>
+                    <button className="action-button delete-button" onClick={() => openDeleteModal(insumo.nome)}>
                       <FaTrash className="icon" />
                       <span className="button-text">Apagar</span>
                     </button>

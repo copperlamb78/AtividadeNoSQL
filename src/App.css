@@ -7,7 +7,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #f4f4f4;
 }
-
+* {
+  color: black;
+}
 .report-container {
   display: flex;
   flex-direction: column;
@@ -56,6 +58,21 @@ body {
   color: #333;
 }
 
+.month-selector input[type="month"] {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.month-selector input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.25) sepia(0.05) saturate(0.6);
+  cursor: pointer;
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: 1fr;
@@ -99,6 +116,12 @@ body {
 }
 .card-saidas p {
   color: #dc3545;
+}
+
+.card-saidas .subvalue {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #666;
 }
 .card-balanco-positivo p {
   color: #17a2b8;
@@ -150,6 +173,13 @@ body {
   color: #28a745;
 }
 .value-saida {
+  color: #dc3545;
+}
+
+.insumo-entrada {
+  color: #28a745;
+}
+.insumo-saida {
   color: #dc3545;
 }
 

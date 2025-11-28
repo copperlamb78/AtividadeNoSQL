@@ -1,49 +1,96 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useId, useRef } from "react";
 import Header from "../components/Header"; // Corrigido para o caminho correto
 import Navbar from "../components/Navbar";
 import "./produto.css";
-import { fetchInsumos } from "./insumo";
 import axios from "axios";
 
-interface Ingredient {
+type IIngredient = {
   id: string | number;
   name: string;
   quantity: string; // Usar string para flexibilidade (ex: "100g", "1 xícara")
-}
+};
 
-interface Recipe {
+type IRecipe = {
   id: string;
   name: string;
   price: number;
-  ingredients: Ingredient[];
-}
+  ingredients: IIngredient[];
+};
+
+// Tipos esperados do backend
+type BackendInsumo = {
+  _id?: string;
+  nome: string;
+  quantidade: number;
+  unidade?: string;
+  custo?: number;
+};
+
+type BackendProduto = {
+  _id?: string;
+  nome: string;
+  preco: number;
+  insumos?: BackendInsumo[];
+};
 
 async function fetchRecipes() {
   try {
     const res = await axios.get("http://localhost:3000/api/produtos");
-    if (res.data && Array.isArray(res.data.produtos)) {
-      // Map backend data to frontend interface
-      return res.data.produtos.map((produto: any) => ({
-        id: produto._id,
-        name: produto.nome,
-        price: produto.preco,
-        ingredients: produto.insumos.map((insumo: any, index: number) => ({
-          id: `${produto._id}-ing-${index}`, // Create a unique id for ingredients
-          name: insumo.nome,
-          quantity: `${insumo.quantidade}`, // Convert quantity to string for consistency
-        })),
-      }));
-    }
-    return [];
+    const source =
+      res.data && Array.isArray(res.data.produtos) ? res.data.produtos : Array.isArray(res.data) ? res.data : [];
+
+    // Map backend data to frontend interface
+    return (source as BackendProduto[]).map(
+      (produto, pIndex) =>
+        ({
+          id: produto._id ?? `${produto.nome}-${pIndex}`,
+          name: produto.nome,
+          price: produto.preco,
+          ingredients: (produto.insumos ?? []).map(
+            (insumo, index) =>
+              ({
+                id: `${produto._id ?? produto.nome}-ing-${index}`,
+                name: insumo.nome,
+                quantity: `${insumo.quantidade ?? ""}`,
+              } as IIngredient)
+          ),
+        } as IRecipe)
+    );
   } catch (error) {
     console.error("Erro ao buscar receitas:", error);
     return [];
   }
 }
 
+// Busca insumos do backend (compatível com o formato retornado por `insumosController`)
+async function fetchInsumos() {
+  try {
+    const res = await axios.get("http://localhost:3000/api/insumos");
+    const source = Array.isArray(res.data) ? res.data : Array.isArray(res.data.insumos) ? res.data.insumos : [];
+    return (source as BackendInsumo[]).map((d) => ({
+      id: d._id ?? d.nome,
+      nome: d.nome,
+      quantidade: d.quantidade,
+      unidade: d.unidade ?? "",
+      custo: d.custo,
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar insumos:", error);
+    return [];
+  }
+}
+
 const ProdutoPage: React.FC = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [insumosEmEstoque, setInsumosEmEstoque] = useState<{ id: number; nome: string; quantidade: number; unidade: string; custo: number }[]>([]);
+  const [recipes, setRecipes] = useState<IRecipe[]>([]);
+  const [insumosEmEstoque, setInsumosEmEstoque] = useState<
+    {
+      id?: string | number;
+      nome: string;
+      quantidade: number;
+      unidade: string;
+      custo?: number;
+    }[]
+  >([]);
 
   useEffect(() => {
     fetchInsumos().then(setInsumosEmEstoque);
@@ -51,13 +98,20 @@ const ProdutoPage: React.FC = () => {
   }, []);
   const [recipeName, setRecipeName] = useState("");
   const [price, setPrice] = useState("");
-  const [ingredients, setIngredients] = useState<Ingredient[]>([{ id: Date.now(), name: "", quantity: "" }]);
+
+  // Gera ids estáveis sem chamar funções impuras durante o render
+  const baseId = useId();
+  const idCounterRef = useRef(1); // começa em 1 porque o índice 0 será usado no inicial
+  const initialIngredient: IIngredient = { id: `${baseId}-0`, name: "", quantity: "" };
+  const genId = () => `${baseId}-${idCounterRef.current++}`;
+
+  const [ingredients, setIngredients] = useState<IIngredient[]>(() => [initialIngredient]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
+  const [recipeToEdit, setRecipeToEdit] = useState<IRecipe | null>(null);
 
   // Estado para o modal de validação/confirmação genérico
   const [validationModal, setValidationModal] = useState({
@@ -68,14 +122,15 @@ const ProdutoPage: React.FC = () => {
   });
 
   const handleAddIngredient = () => {
-    setIngredients([...ingredients, { id: Date.now(), name: "", quantity: "" }]);
+    const novo: IIngredient = { id: genId(), name: "", quantity: "" };
+    setIngredients((prev) => [...prev, novo]);
   };
 
   const handleRemoveIngredient = (id: number | string) => {
     setIngredients(ingredients.filter((ing) => ing.id !== id));
   };
 
-  const handleIngredientChange = (id: number | string, field: keyof Ingredient, value: string) => {
+  const handleIngredientChange = (id: number | string, field: keyof IIngredient, value: string) => {
     setIngredients(ingredients.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing)));
   };
 
@@ -123,7 +178,7 @@ const ProdutoPage: React.FC = () => {
       // Limpa o formulário
       setRecipeName("");
       setPrice("");
-      setIngredients([{ id: Date.now(), name: "", quantity: "" }]);
+      setIngredients([initialIngredient]);
     } catch (error) {
       console.error("Erro ao adicionar receita:", error);
       let errorMessage = "Ocorreu um erro ao adicionar a receita.";
@@ -175,7 +230,7 @@ const ProdutoPage: React.FC = () => {
 
   // --- Funções para o Modal de Edição ---
 
-  const openEditModal = (recipe: Recipe) => {
+  const openEditModal = (recipe: IRecipe) => {
     setRecipeToEdit(JSON.parse(JSON.stringify(recipe)));
     setIsEditModalOpen(true);
   };
@@ -193,13 +248,13 @@ const ProdutoPage: React.FC = () => {
     });
   };
 
-  const handleRecipeEditChange = (field: keyof Recipe, value: string | number) => {
+  const handleRecipeEditChange = (field: keyof IRecipe, value: string | number) => {
     if (recipeToEdit) {
       setRecipeToEdit({ ...recipeToEdit, [field]: value });
     }
   };
 
-  const handleEditIngredientChange = (id: number | string, field: keyof Ingredient, value: string) => {
+  const handleEditIngredientChange = (id: number | string, field: keyof IIngredient, value: string) => {
     if (recipeToEdit) {
       const updatedIngredients = recipeToEdit.ingredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
@@ -210,7 +265,7 @@ const ProdutoPage: React.FC = () => {
 
   const handleAddIngredientToEdit = () => {
     if (recipeToEdit) {
-      const newIngredient: Ingredient = { id: Date.now(), name: "", quantity: "" };
+      const newIngredient: IIngredient = { id: genId(), name: "", quantity: "" };
       setRecipeToEdit({ ...recipeToEdit, ingredients: [...recipeToEdit.ingredients, newIngredient] });
     }
   };
@@ -235,7 +290,7 @@ const ProdutoPage: React.FC = () => {
       });
       return;
     }
-    
+
     setValidationModal({
       isOpen: true,
       title: "Confirmar Alterações?",
@@ -369,7 +424,7 @@ const ProdutoPage: React.FC = () => {
               <p className="receita-preco">R$ {recipe.price.toFixed(2).replace(".", ",")}</p>
 
               <div className="receita-card-actions">
-                <button className="edit-button" onClick={() => openEditModal(recipe as Recipe)}>
+                <button className="edit-button" onClick={() => openEditModal(recipe)}>
                   Editar
                 </button>
                 <button className="delete-button" onClick={() => openDeleteModal(recipe.name)}>
@@ -428,10 +483,7 @@ const ProdutoPage: React.FC = () => {
             {recipeToEdit.ingredients.map((ing) => (
               <div key={ing.id} className="ingrediente-item-row">
                 <div className="form-group ingrediente-group">
-                  <select
-                    value={ing.name}
-                    onChange={(e) => handleEditIngredientChange(ing.id, "name", e.target.value)}
-                  >
+                  <select value={ing.name} onChange={(e) => handleEditIngredientChange(ing.id, "name", e.target.value)}>
                     <option value="">Selecione um insumo</option>
                     {insumosEmEstoque.map((insumo) => (
                       <option key={insumo.id} value={insumo.nome}>

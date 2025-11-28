@@ -11,6 +11,7 @@ import {
 } from "../model/pedidoModel.ts";
 import { getProdutoByNameModel } from "../model/produtosModel.ts";
 import { getInsumoByNameModel, updateInsumoByNameModel } from "../model/insumosModel.ts";
+import { createSaidaModel } from "../model/saidasModel.ts";
 
 export async function createPedidoController(req: Request, res: Response) {
   try {
@@ -23,27 +24,55 @@ export async function createPedidoController(req: Request, res: Response) {
       });
     }
     let ReceitaTotal = 0;
-    const insumosUsados: { nome: string; quantidade: number }[] = [];
+    const insumosUsados: { nome: string; quantidade: number; custo: number }[] = [];
     for (const produto of parse.data.produtos) {
       const produtoToCount = await getProdutoByNameModel({ nome: produto.nome });
       if (!produtoToCount) {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
       for (const insumo of produtoToCount.insumos) {
-        const insumoUsadoParaLista = { nome: insumo.nome, quantidade: insumo.quantidade * produto.quantidade };
+        const insumoRecords = await getInsumoByNameModel({ nome: insumo.nome });
+        const insumoFromDB = Array.isArray(insumoRecords) ? insumoRecords[0] : insumoRecords;
+        const unitCost =
+          typeof insumoFromDB?.custo === "number" ? insumoFromDB.custo : Number(insumoFromDB?.custo ?? 0);
+        const quantidadeUsada = Number(insumo.quantidade) * Number(produto.quantidade);
+        const custoInsumo = unitCost * quantidadeUsada;
+        const insumoUsadoParaLista = {
+          nome: insumo.nome,
+          quantidade: quantidadeUsada,
+          custo: Number(custoInsumo.toFixed(2)),
+        };
         const insumoNoEstoque = await getInsumoByNameModel({ nome: insumoUsadoParaLista.nome });
-        if (insumoNoEstoque[0].quantidade < insumoUsadoParaLista.quantidade) {
+        if (
+          !insumoNoEstoque ||
+          insumoNoEstoque.length === 0 ||
+          Number(insumoNoEstoque[0].quantidade) < insumoUsadoParaLista.quantidade
+        ) {
           return res.status(400).json({ message: `Insumo ${insumoUsadoParaLista.nome} insuficiente no estoque` });
         }
-        await updateInsumoByNameModel(insumoUsadoParaLista.nome, {
-          quantidade: insumoNoEstoque[0]?.quantidade - insumoUsadoParaLista.quantidade,
-        });
+        const quantidadeAtualEstoque = insumoNoEstoque[0]?.quantidade - insumoUsadoParaLista.quantidade;
+        await updateInsumoByNameModel(
+          insumoUsadoParaLista.nome,
+          { quantidade: Number(quantidadeAtualEstoque.toFixed(3)) },
+          new Date().toISOString()
+        );
         insumosUsados.push(insumoUsadoParaLista);
       }
       const produtoPreco = produtoToCount.preco * produto.quantidade;
       ReceitaTotal += produtoPreco;
     }
     const pedidoCriado = await createPedidoModel(parse.data.produtos, insumosUsados, ReceitaTotal, data);
+    try {
+      const totalCustoInsumos = insumosUsados.reduce((acc, cur) => acc + (cur.custo || 0), 0);
+      await createSaidaModel({
+        insumos: insumosUsados,
+        valorTotal: Number(totalCustoInsumos.toFixed(2)),
+        motivo: `Venda`,
+        data,
+      });
+    } catch (e) {
+      console.error("Erro ao registrar saída após criar pedido:", e);
+    }
     return res.status(201).json(pedidoCriado);
   } catch (error) {
     console.error("Error ao criar pedido: ", error);
@@ -117,9 +146,11 @@ export async function deletePedidoByIdController(req: Request, res: Response) {
     }
     for (const insumo of pedidoToDelete.insumosUsados) {
       const insumoNoEstoque = await getInsumoByNameModel({ nome: insumo.nome });
-      await updateInsumoByNameModel(insumo.nome, {
-        quantidade: insumoNoEstoque[0].quantidade + insumo.quantidade,
-      });
+      await updateInsumoByNameModel(
+        insumo.nome,
+        { quantidade: insumoNoEstoque[0].quantidade + insumo.quantidade },
+        new Date().toISOString()
+      );
     }
     const pedidoDeletado = await deletePedidoByIdModel(id);
     return res.status(200).json(pedidoDeletado);
